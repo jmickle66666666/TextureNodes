@@ -9,8 +9,8 @@ canvas#texturenodecanvas {
 }
 
 div.node {
-    width : 100px;
-    height : 120px;
+    width : 200px;
+    height : 220px;
     position: absolute;
     background-color: slategray;
     -moz-user-select: none;
@@ -30,8 +30,6 @@ div.nodeTitle {
 }
 
 div.nodeContents {
-    width: 100px;
-    height: 100px;
     display: flex;
 }
 
