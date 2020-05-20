@@ -1,4 +1,4 @@
-function createNode(name, x = 0, y = 0) {
+function createNode(name, method, x = 0, y = 0) {
     let elem = document.createElement("div");
     elem.classList.add("node");
 
@@ -49,14 +49,22 @@ function createNode(name, x = 0, y = 0) {
     textureElem.classList.add("texturePreview");
     textureElem.width = 64;
     textureElem.height = 64;
-    noise(textureElem.getContext('2d'));
+    let context = textureElem.getContext('2d');
     contents.appendChild(textureElem);
 
-    
     let node = {
-        layers: [],
+        texture: textureElem,
+        context: textureElem.getContext('2d'),
+        calculate: method,
         elem: elem
     };
+
+    let generateButtonElem = document.createElement("button");
+    generateButtonElem.innerHTML = "GENERATE";
+    generateButtonElem.onclick = function() {
+        method(node);
+    };
+    contents.appendChild(generateButtonElem);
 
     elem.oncontextmenu = function(e) {
         if (nodeContextMenu.style.display == "block") {
@@ -69,23 +77,11 @@ function createNode(name, x = 0, y = 0) {
         }
     }
 
+    method(node);
+
     nodes.push(node);
 
     return node;
-}
-
-function noise(context)
-{
-    let imageData = context.createImageData(64, 64);
-    let data = imageData.data;
-    for (let i = 0; i < data.length; i+=4) {
-        let r = Math.floor(Math.random() * 256);
-        data[i + 0] = r;
-        data[i + 1] = r;
-        data[i + 2] = r;
-        data[i + 3] = 255;
-    }
-    context.putImageData(imageData, 0, 0);
 }
 
 function createConnection(start, end)
@@ -121,6 +117,7 @@ let connections = [];
 let nodes = [];
 let contextMenu;
 let nodeContextMenu;
+let nodeCreateMenu;
 let selectedNode = null;
 
 window.onload = function() {
@@ -132,6 +129,23 @@ window.onload = function() {
     }
 
     dragElement = null;
+
+    nodeCreateMenu = document.createElement('div');
+    nodeCreateMenu.classList.add('contextmenu');
+    let ul = document.createElement('ul');
+    for (let i = 0; i < nodeDefinitions.length; i++) {
+        let li = document.createElement('li');
+        li.onclick = function() {
+            createNode(nodeDefinitions[i].name, nodeDefinitions[i], nodeCreateMenu.offsetLeft, nodeCreateMenu.offsetTop);
+
+            nodeCreateMenu.style.display = "none";
+        };
+        li.innerHTML = nodeDefinitions[i].name;
+        ul.appendChild(li);
+    }
+    nodeCreateMenu.appendChild(ul);
+    nodeCreateMenu.style.display = "none";
+    this.document.body.appendChild(nodeCreateMenu);
 
 
     svg = document.getElementById("nodesvg");
@@ -166,11 +180,22 @@ window.onload = function() {
                 nodeContextMenu.style.display = "none";
             }
         }
+
+        if (nodeCreateMenu.style.display == "block") {
+            if (e.clientX > nodeCreateMenu.offsetLeft && e.clientX < nodeCreateMenu.offsetLeft + nodeCreateMenu.clientWidth && e.clientY > nodeCreateMenu.offsetTop && e.clientY < nodeCreateMenu.offsetTop + nodeCreateMenu.clientHeight) {
+
+            } else {
+                nodeCreateMenu.style.display = "none";
+            }
+        }
     });
 
     document.getElementById("contextMenuCreateNode").addEventListener("click", function(e) {
         console.log("Create Node!");
-        createNode("New Node", contextMenu.offsetLeft, contextMenu.offsetTop);
+        //createNode("New Node", greyscaleNoise, contextMenu.offsetLeft, contextMenu.offsetTop);
+        nodeCreateMenu.style.left = e.clientX;
+        nodeCreateMenu.style.top = e.clientY;
+        nodeCreateMenu.style.display = "block";
         contextMenu.style.display = "none";
     });
 
@@ -202,9 +227,13 @@ window.onload = function() {
         }
     });
 
+    let noise1node = this.createNode("greyscale noise", greyscaleNoise, 100, 100);
+    let noise2node = this.createNode("color noise", colorNoise, 500, 100);
+    let colorNode = this.createNode("random color", this.randomColor, 100, 360);
+
     this.createConnection(
-        this.createNode("hello", 100, 100).elem,
-        this.createNode("hello2", 300, 150).elem
+        noise1node.elem,
+        noise2node.elem
     );
 
     this.updateLines();
